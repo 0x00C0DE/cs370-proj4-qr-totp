@@ -4,7 +4,7 @@ CS370 project 4
 Braden Lee
 Oregon State University
 
-This program is intended to mimic the well known "Google Authenticator". This program generates a qr code provided to be read by qr scanners. This program also has the ability to generate the totp that GA uses's in their algorithm. 
+This program is intended to mimic the well known "Google Authenticator". This program generates a qr code intended to be read by qr scanners. This program also has the ability to generate the totp that GA uses's in their algorithm. 
 
 INSTRUCTIONS
 ---------------
