@@ -24,8 +24,8 @@ need to install pyqrcode to generate qr
 
 to execute
 
-1. python3 qrcode_bl.py --generate-qr
-2. python3 qrcode_bl.py --get-otp
+1. python3 leebrad-MP4.py --generate-qr
+2. python3 leebrad-MP4.py --get-otp
 
 to leave virtual environment
 
