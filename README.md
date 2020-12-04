@@ -4,16 +4,25 @@ CS370 project 4
 Braden Lee
 Oregon State University
 
-Bloom filter program. This program generates output3.txt and output5.txt for results of checking passwors against bloom filter 1 and bloom filter 2
+This program is intended to mimic the well known "Google Authenticator". This program generates a qr code provided to be read by qr scanners. This program also has the ability to generate the totp that GA uses's in their algorithm. 
 
-INSTRUCTIONS to compile & run
+INSTRUCTIONS
 ---------------
-1. make sure the "dictionary.txt" file and the "sample_input.txt" file are in the same directory as the "bloom_filters.py" program to correctly execute the program.
+how to set up virtual environment in current directory
 
-2. To compile. "python2 bloom_filters.py dictionary.txt sample_input.txt output3.txt output5.txt"
+1. python3 -m venv env
+2. source env/bin/activate
 
-- Side note:  dictionary.txt is arg[1]
-              sample_input.txt is arg[2] 
-              output3.txt is arg[3] 
-              output5.txt is arg[4]
+need to install pyqrcode to generate qr
+
+1. pip install pyqrcode
+
+to execute
+
+1. python3 qrcode_bl.py --generate-qr
+2. python3 qrcode_bl.py --get-otp
+
+to leave virtual environment
+
+1. deactive
 ---------------
