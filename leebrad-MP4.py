@@ -17,8 +17,8 @@ import array
 def create_qrcode(): 
 
 	#creates user id
-	username = 'leebrad'
-	user_email = username + "@oregonstate.edu"	
+	username = 'braden.lee96'
+	user_email = username + "@gmail.com"	
 	#print(user_email)
 
 
