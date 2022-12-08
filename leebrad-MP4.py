@@ -17,8 +17,8 @@ import array
 def create_qrcode(): 
 
 	#creates user id
-	username = 'braden.lee96'
-	user_email = username + "@gmail.com"	
+	username = 'leebrad'
+	user_email = username + "@oregonstate.edu"	
 	#print(user_email)
 
 
@@ -28,7 +28,7 @@ def create_qrcode():
 
 	# Uri format	
 	#url = 'otpauth://totp/' + '0x00C0DE' + ':' + user_email + '?secret=' + secret + '&issuer=' + '0x00C0DE'
-	url = 'otpauth://totp/' + 'smallmediumpizza' + ':' + user_email + '?secret=' + secret + '&issuer=' + 'smallmediumpiza'
+	url = 'otpauth://totp/' + 'smallmediumpizza' + ':' + user_email + '?secret=' + secret + '&issuer=' + 'smallmediumpizza'
 	#print(url)
 
 	# function to actually generate the qr
