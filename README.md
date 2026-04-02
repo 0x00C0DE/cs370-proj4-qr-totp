@@ -1,38 +1,67 @@
 # cs370-proj4-qr-totp
 CS370 project 4
 
-Braden Lee (alias: 0x00C0DE, smallmediumpizza)
+This program is a Python implementation of a QR-based TOTP enrollment flow similar to Google Authenticator. It generates a QR code containing a fresh random shared secret and can also generate the matching 6-digit TOTP using that same saved secret.
 
-Intro to Security (CS_370_001_F2020)
+## Requirements
 
-Oregon State University
+- Python 3
+- `pyqrcode`
 
-This program is intended to mimic the well known "Google Authenticator", in the language python (specifically python3). This program generates a qr code intended to be read by qr scanners. This program also has the ability to generate the exact 6 digit totp that GA uses's in their algorithm. 
+## Setup
 
-well detailed step by step guide is provided in this program via comments :]
+Create and activate a virtual environment if you want an isolated Python environment.
 
-INSTRUCTIONS
----------------
-how to set up virtual environment in current directory
+```bash
+python -m venv env
+```
 
-1. python3 -m venv env
-2. source env/bin/activate
+Windows PowerShell:
 
-need to install pyqrcode to generate qr
+```powershell
+.\env\Scripts\Activate.ps1
+```
 
-1. pip install pyqrcode
+macOS/Linux:
 
-to execute
+```bash
+source env/bin/activate
+```
 
-1. python3 leebrad-MP4.py --generate-qr
-2. python3 leebrad-MP4.py --get-otp
+Install the QR dependency:
 
-Notes
----------------
-`--generate-qr` now creates a new random shared secret each time and stores it locally in `totp_secret.txt`.
-`--get-otp` reads that saved secret so the generated TOTP matches the currently enrolled QR code.
+```bash
+pip install pyqrcode
+```
 
-to leave virtual environment
+## Usage
 
-1. deactive
----------------
+Generate a QR code with your own issuer, username, and email:
+
+```bash
+python leebrad-MP4.py --generate-qr --issuer "ExampleApp" --username "alice" --email "alice@example.com"
+```
+
+What this does:
+
+- Creates a new random shared secret
+- Saves that secret in `totp_secret.txt`
+- Writes the QR code SVG to `uri_qrcode.svg`
+
+Generate the current OTP from the saved secret:
+
+```bash
+python leebrad-MP4.py --get-otp
+```
+
+## Notes
+
+- Run `--generate-qr` first so the script has a saved secret to use.
+- Each time you run `--generate-qr`, a brand-new secret is created.
+- If you generate a new QR code, the old OTP values are no longer valid because the shared secret has changed.
+- The generated `totp_secret.txt` file should be treated as sensitive data and should not be shared.
+
+## Output Files
+
+- `uri_qrcode.svg`: the generated QR code image
+- `totp_secret.txt`: the locally saved shared secret used for OTP generation

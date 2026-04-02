@@ -1,23 +1,34 @@
 #Braden Lee
+import argparse
+import array
+import base64
+import hashlib
+import hmac
+import math
 import os
 import sys
-import base64
-import hmac
-import hashlib
 import time
-import math
-import array
+from urllib.parse import quote
 
 SECRET_FILE = "totp_secret.txt"
+QR_FILE = "uri_qrcode.svg"
+
+
+def get_base_path():
+	return os.path.dirname(os.path.abspath(__file__))
 
 
 def get_secret_file_path():
-	return os.path.join(os.path.dirname(os.path.abspath(__file__)), SECRET_FILE)
+	return os.path.join(get_base_path(), SECRET_FILE)
+
+
+def get_qr_file_path():
+	return os.path.join(get_base_path(), QR_FILE)
 
 
 def generate_secret():
 	# Generate a 160-bit secret, which matches the size commonly used for TOTP.
-	return base64.b32encode(os.urandom(20)).decode('utf-8').rstrip('=')
+	return base64.b32encode(os.urandom(20)).decode("utf-8").rstrip("=")
 
 
 def save_secret(secret):
@@ -41,100 +52,115 @@ def decode_secret(secret):
 	padding = (-len(secret)) % 8
 	return base64.b32decode(secret + ("=" * padding), casefold=True)
 
-# function to generate qr code svg	
-def create_qrcode(): 
+
+def build_otpauth_url(issuer, username, user_email, secret):
+	label = quote(f"{issuer}:{user_email}")
+	issuer_param = quote(issuer)
+	return (
+		f"otpauth://totp/{label}?secret={secret}"
+		f"&issuer={issuer_param}&username={quote(username)}"
+	)
+
+
+def create_qrcode(issuer, username, user_email):
 	import pyqrcode
 
-	#creates user id
-	username = 'leebrad'
-	user_email = username + "@oregonstate.edu"	
-	#print(user_email)
-
-
-	# Create a fresh secret whenever a new QR enrollment is generated.
 	secret = generate_secret()
 	save_secret(secret)
-	#print(secret)
 
-	# Uri format	
-	#url = 'otpauth://totp/' + '0x00C0DE' + ':' + user_email + '?secret=' + secret + '&issuer=' + '0x00C0DE'
-	url = 'otpauth://totp/' + 'smallmediumpizza' + ':' + user_email + '?secret=' + secret + '&issuer=' + 'smallmediumpizza'
-	#print(url)
-
-	# function to actually generate the qr
+	url = build_otpauth_url(issuer, username, user_email, secret)
 	url_qrcode = pyqrcode.create(url)
+	url_qrcode.svg(get_qr_file_path(), scale=8)
 
-	# saves the qr as a svg image name "uri_qrcode.svg"
-	url_qrcode.svg("uri_qrcode.svg", scale="8")
-
+	print("QR code saved to:", get_qr_file_path())
+	print("Username:", username)
+	print("Email:", user_email)
+	print("Issuer:", issuer)
 	return
 
 
-# function to generate totp
 def create_otp():
-	
-	# epoch time
 	c_timer = math.floor(time.time())
-
-	# couter variable for 30 seconds
 	steps_thirty = 30
+	time_counter = int(c_timer / steps_thirty)
 
-	Time_counter = int((c_timer/steps_thirty))
-
-	t_c = Time_counter
-	#print("timer counter:", Time_counter)
-
-	# convert time to bytes
-	byte_arr = array.array('B')
+	t_c = time_counter
+	byte_arr = array.array("B")
 	for i in reversed(range(0, 8)):
-		
-		# (AND) with 1111 1111 to leave the last 8 bits
 		byte_arr.insert(0, t_c & 0b11111111)
-		# perform bit shift by 8 places
 		t_c >>= 8
 
-	# Time converted to bytes
-	Time_bytes = byte_arr
-	#print("Time_bytes: ", Time_bytes)
-
-	# Use the same enrolled secret that was embedded in the QR code.
+	time_bytes = byte_arr
 	secret = decode_secret(load_secret())
+	qr_otp = hmac.new(secret, time_bytes, hashlib.sha1).hexdigest()
 
-	# hmac generation
-	qr_otp = hmac.new(secret, Time_bytes, hashlib.sha1).hexdigest()
-
-	# convert to binary and take last 4 bits to use as the offset(int)
 	bitstring = bin(int(qr_otp, 16))
 	last_4_bits = bitstring[-4:]
 	qr_offset = int(last_4_bits, 2)
-
-	# grabs the next 31 bits needed using (AND) with bitmask 01111111 11111111 11111111 11111111
 	binary_otp = int(qr_otp[(qr_offset * 2):((qr_offset * 2) + 8)], 16) & 0b01111111111111111111111111111111
-	
-	# takes the last 6 digits as totp
-	dig_6 = str(binary_otp)
-	dig_6 = dig_6[-6:]	
 
+	dig_6 = str(binary_otp)[-6:]
 	print("dig_6 is: ", dig_6)
 	return
-# arg checker
-first_arg = None
-if len(sys.argv) == 1:
-	print("[ERROR]")
-	print("not enough args.lol")
-	print("[ERROR]")
-	sys.exit(1)
-else:
-	first_arg = sys.argv[1]
-	print("first arg is:", first_arg)
 
 
-if first_arg == '--generate-qr':
-	print("in [generate qr]")
-	create_qrcode()
+def parse_args():
+	parser = argparse.ArgumentParser(
+		description="Generate a TOTP QR enrollment and matching one-time passwords."
+	)
+	parser.add_argument(
+		"--generate-qr",
+		action="store_true",
+		help="Generate a QR code with a fresh random secret.",
+	)
+	parser.add_argument(
+		"--get-otp",
+		action="store_true",
+		help="Generate the current OTP from the saved secret.",
+	)
+	parser.add_argument(
+		"--issuer",
+		help="Issuer name shown in authenticator apps. Required with --generate-qr.",
+	)
+	parser.add_argument(
+		"--username",
+		help="Username associated with the QR enrollment. Required with --generate-qr.",
+	)
+	parser.add_argument(
+		"--email",
+		help="Email associated with the QR enrollment. Required with --generate-qr.",
+	)
 
-if first_arg == "--get-otp":
-	print("in [get otp]")
-	create_otp()
+	args = parser.parse_args()
 
-print("done")
+	if args.generate_qr == args.get_otp:
+		parser.error("choose exactly one of --generate-qr or --get-otp")
+
+	if args.generate_qr:
+		missing_args = []
+		if not args.issuer:
+			missing_args.append("--issuer")
+		if not args.username:
+			missing_args.append("--username")
+		if not args.email:
+			missing_args.append("--email")
+		if missing_args:
+			parser.error("--generate-qr requires " + ", ".join(missing_args))
+
+	return args
+
+
+def main():
+	args = parse_args()
+
+	if args.generate_qr:
+		create_qrcode(args.issuer, args.username, args.email)
+
+	if args.get_otp:
+		create_otp()
+
+	print("done")
+
+
+if __name__ == "__main__":
+	main()
