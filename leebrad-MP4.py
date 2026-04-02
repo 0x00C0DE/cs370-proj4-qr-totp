@@ -1,20 +1,49 @@
 #Braden Lee
 import os
 import sys
-import pyqrcode
-import getpass
-import random
 import base64
 import hmac
-import string
 import hashlib
 import time
 import math
-import struct
 import array
+
+SECRET_FILE = "totp_secret.txt"
+
+
+def get_secret_file_path():
+	return os.path.join(os.path.dirname(os.path.abspath(__file__)), SECRET_FILE)
+
+
+def generate_secret():
+	# Generate a 160-bit secret, which matches the size commonly used for TOTP.
+	return base64.b32encode(os.urandom(20)).decode('utf-8').rstrip('=')
+
+
+def save_secret(secret):
+	with open(get_secret_file_path(), "w", encoding="ascii") as secret_file:
+		secret_file.write(secret)
+
+
+def load_secret():
+	secret_path = get_secret_file_path()
+	if not os.path.exists(secret_path):
+		print("[ERROR]")
+		print("No enrolled secret found. Run --generate-qr first.")
+		print("[ERROR]")
+		sys.exit(1)
+
+	with open(secret_path, "r", encoding="ascii") as secret_file:
+		return secret_file.read().strip()
+
+
+def decode_secret(secret):
+	padding = (-len(secret)) % 8
+	return base64.b32decode(secret + ("=" * padding), casefold=True)
 
 # function to generate qr code svg	
 def create_qrcode(): 
+	import pyqrcode
 
 	#creates user id
 	username = 'leebrad'
@@ -22,8 +51,9 @@ def create_qrcode():
 	#print(user_email)
 
 
-	# static secret to make testing purposes easier
-	secret = base64.b32encode(bytearray("BIGONEBUYNOWSAVE", "ascii")).decode('utf-8')[:-6]	
+	# Create a fresh secret whenever a new QR enrollment is generated.
+	secret = generate_secret()
+	save_secret(secret)
 	#print(secret)
 
 	# Uri format	
@@ -67,8 +97,8 @@ def create_otp():
 	Time_bytes = byte_arr
 	#print("Time_bytes: ", Time_bytes)
 
-	# static secret to bytes
-	secret = bytearray("BIGONEBUYNOWSAVE", "ascii")
+	# Use the same enrolled secret that was embedded in the QR code.
+	secret = decode_secret(load_secret())
 
 	# hmac generation
 	qr_otp = hmac.new(secret, Time_bytes, hashlib.sha1).hexdigest()
@@ -88,10 +118,12 @@ def create_otp():
 	print("dig_6 is: ", dig_6)
 	return
 # arg checker
+first_arg = None
 if len(sys.argv) == 1:
 	print("[ERROR]")
 	print("not enough args.lol")
 	print("[ERROR]")
+	sys.exit(1)
 else:
 	first_arg = sys.argv[1]
 	print("first arg is:", first_arg)

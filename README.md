@@ -27,6 +27,11 @@ to execute
 1. python3 leebrad-MP4.py --generate-qr
 2. python3 leebrad-MP4.py --get-otp
 
+Notes
+---------------
+`--generate-qr` now creates a new random shared secret each time and stores it locally in `totp_secret.txt`.
+`--get-otp` reads that saved secret so the generated TOTP matches the currently enrolled QR code.
+
 to leave virtual environment
 
 1. deactive
